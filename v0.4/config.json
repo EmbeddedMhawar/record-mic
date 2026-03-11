@@ -1,0 +1,27 @@
+{
+  "mode": "phone",
+  "audio_source": "samsung",
+  "phone": {
+    "video_device": "9A301FFAZ00DJA",
+    "mcam_dir": "/sdcard/DCIM/MotionCam",
+    "wifi_ip": "10.114.222.226",
+    "wifi_port": "5555",
+    "hotspot_ssid": "Pixel",
+    "hotspot_pass": "adminadmin"
+  },
+  "samsung": {
+    "device": "192.168.11.106:5555",
+    "recording_dir": "/sdcard/Android/data/com.first75.voicerecorder2/files/Recordings",
+    "wifi_ip": "192.168.11.106",
+    "wifi_port": "5555"
+  },
+  "pc": {
+    "audio_source": "default",
+    "sample_rate": 48000,
+    "channels": 2
+  },
+  "audio": {
+    "format": "wav",
+    "bitrate": "320k"
+  }
+}
