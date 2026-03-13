@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Mock venv python — handles audio_sync.py calls and -c flag
+#   MOCK_AUDIO_OFFSET — returned when calling audio_sync.py (default: "0.5")
+
+for arg in "$@"; do
+    if [[ "$arg" == *"audio_sync.py"* ]]; then
+        echo "${MOCK_AUDIO_OFFSET:-0.5}"
+        exit 0
+    fi
+done
+
+# For -c flag, delegate to real python3
+if [[ "$1" == "-c" ]]; then
+    exec python3 -c "$2"
+fi

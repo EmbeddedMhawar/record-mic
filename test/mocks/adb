@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Mock adb — behavior controlled by environment variables:
+#   MOCK_ADB_DEVICES       — output for "adb devices" (default: empty device list)
+#   MOCK_ADB_CONNECT_OUTPUT — output for "adb connect" (default: "connected to ...")
+
+case "$1" in
+    devices)
+        echo "List of devices attached"
+        echo "${MOCK_ADB_DEVICES:-}"
+        ;;
+    connect)
+        echo "${MOCK_ADB_CONNECT_OUTPUT:-connected to $2}"
+        ;;
+    disconnect)
+        # no-op
+        ;;
+    -s)
+        # adb -s <serial> <cmd...>: record the serial, shift past it
+        echo "ADB_SERIAL=$2" >&2
+        shift 2
+        case "$1" in
+            devices) echo "List of devices attached"; echo "${MOCK_ADB_DEVICES:-}" ;;
+            *) ;;
+        esac
+        ;;
+    *)
+        ;;
+esac

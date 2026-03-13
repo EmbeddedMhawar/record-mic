@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Mock timeout — strips the timeout arg and executes the rest
+shift  # remove timeout duration
+exec "$@"

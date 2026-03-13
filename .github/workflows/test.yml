@@ -1,0 +1,22 @@
+name: Tests
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Syntax check
+        run: bash -n v0.5.1/record-mic.sh
+
+      - name: Shellcheck
+        run: shellcheck v0.5.1/record-mic.sh || true
+
+      - name: Run bats tests
+        run: ./test/run_tests.sh
+
+      - name: Python syntax check
+        run: python3 -c "import py_compile; py_compile.compile('v0.5.1/audio_sync.py', doraise=True)"

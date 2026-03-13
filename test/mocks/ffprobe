@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Mock ffprobe — behavior controlled by environment variables:
+#   MOCK_FFPROBE_DURATION — returned for duration queries (default: "10.0")
+#   MOCK_FFPROBE_STREAMS  — returned for stream queries (default: empty)
+
+for arg in "$@"; do
+    if [[ "$arg" == *"duration"* ]]; then
+        echo "${MOCK_FFPROBE_DURATION:-10.0}"
+        exit 0
+    fi
+done
+
+# show_streams query (for detecting audio tracks)
+echo "${MOCK_FFPROBE_STREAMS:-}"

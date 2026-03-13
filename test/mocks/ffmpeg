@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Mock ffmpeg — no-op, creates output file if -y flag and output path detected
+
+output=""
+for arg in "$@"; do
+    # The last argument is typically the output file
+    output="$arg"
+done
+
+if [[ -n "$output" && "$output" != -* ]]; then
+    mkdir -p "$(dirname "$output")" 2>/dev/null || true
+    touch "$output"
+fi

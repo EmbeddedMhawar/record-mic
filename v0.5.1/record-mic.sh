@@ -26,18 +26,6 @@ LAST_SESSION_FILE="$HOME/.cache/record-mic-last-session"
 
 AUDIO_BITRATE="320k"
 
-# ── Check dependencies ───────────────────────────────────────────────────────
-if [[ ! -f "$DEVICES_YAML" ]]; then
-    echo "Error: devices.yaml not found. Run: python setup_devices.py"
-    exit 1
-fi
-
-if [[ ! -f "$VENV_PYTHON" ]]; then
-    echo "Error: venv not found at $SCRIPT_DIR/venv"
-    echo "Create it: python3 -m venv venv && venv/bin/pip install pyyaml numpy scipy"
-    exit 1
-fi
-
 # ── Read devices.yaml via Python (no yq dependency) ─────────────────────────
 read_device_field() {
     # Usage: read_device_field <role> <field>
@@ -53,34 +41,6 @@ for d in cfg.get('devices', []):
 print('')
 "
 }
-
-# Load video device config
-VIDEO_SERIAL=$(read_device_field video serial)
-VIDEO_NAME=$(read_device_field video name)
-VIDEO_CONNECTION=$(read_device_field video connection)
-VIDEO_IP=$(read_device_field video ip)
-VIDEO_PORT=$(read_device_field video port)
-VIDEO_PULL_DIR=$(read_device_field video pull_dir)
-
-# Load audio device config
-AUDIO_SERIAL=$(read_device_field audio serial)
-AUDIO_NAME=$(read_device_field audio name)
-AUDIO_CONNECTION=$(read_device_field audio connection)
-AUDIO_IP=$(read_device_field audio ip)
-AUDIO_PORT=$(read_device_field audio port)
-AUDIO_PULL_DIR=$(read_device_field audio pull_dir)
-
-if [[ -z "$VIDEO_SERIAL" ]]; then
-    echo "Error: No video device configured in devices.yaml"
-    echo "Run: python setup_devices.py"
-    exit 1
-fi
-
-if [[ -z "$AUDIO_SERIAL" ]]; then
-    echo "Error: No audio device configured in devices.yaml"
-    echo "Run: python setup_devices.py"
-    exit 1
-fi
 
 # ── ADB helpers ──────────────────────────────────────────────────────────────
 adb_for() {
@@ -288,6 +248,49 @@ resolve_session() {
         echo ""
     fi
 }
+
+# ── Main guard: only run side effects when executed directly ─────────────────
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+
+# ── Check dependencies ───────────────────────────────────────────────────────
+if [[ ! -f "$DEVICES_YAML" ]]; then
+    echo "Error: devices.yaml not found. Run: python setup_devices.py"
+    exit 1
+fi
+
+if [[ ! -f "$VENV_PYTHON" ]]; then
+    echo "Error: venv not found at $SCRIPT_DIR/venv"
+    echo "Create it: python3 -m venv venv && venv/bin/pip install pyyaml numpy scipy"
+    exit 1
+fi
+
+# Load video device config
+VIDEO_SERIAL=$(read_device_field video serial)
+VIDEO_NAME=$(read_device_field video name)
+VIDEO_CONNECTION=$(read_device_field video connection)
+VIDEO_IP=$(read_device_field video ip)
+VIDEO_PORT=$(read_device_field video port)
+VIDEO_PULL_DIR=$(read_device_field video pull_dir)
+
+# Load audio device config
+AUDIO_SERIAL=$(read_device_field audio serial)
+AUDIO_NAME=$(read_device_field audio name)
+AUDIO_CONNECTION=$(read_device_field audio connection)
+AUDIO_IP=$(read_device_field audio ip)
+AUDIO_PORT=$(read_device_field audio port)
+AUDIO_PULL_DIR=$(read_device_field audio pull_dir)
+
+if [[ -z "$VIDEO_SERIAL" ]]; then
+    echo "Error: No video device configured in devices.yaml"
+    echo "Run: python setup_devices.py"
+    exit 1
+fi
+
+if [[ -z "$AUDIO_SERIAL" ]]; then
+    echo "Error: No audio device configured in devices.yaml"
+    echo "Run: python setup_devices.py"
+    exit 1
+fi
 
 # ── DEL ──────────────────────────────────────────────────────────────────────
 if [[ "${1:-}" == "del" ]]; then
@@ -653,3 +656,5 @@ else
     echo "Combined outputs:"
     for f in "${FINAL_OUTPUTS[@]}"; do echo "  $f"; done
 fi
+
+fi # end main guard
