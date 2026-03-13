@@ -495,7 +495,11 @@ while IFS= read -r VIDEO_REMOTE; do
     LOCAL_NAME="${PADNUM}_${BASENAME}"
 
     echo "Pulling take $TAKE_NUM: $BASENAME"
-    adb_for "$VIDEO_SERIAL" pull "$VIDEO_REMOTE" "$SESSION_DIR/.video_raw/$LOCAL_NAME" 2>&1
+    if ! adb_for "$VIDEO_SERIAL" pull "$VIDEO_REMOTE" "$SESSION_DIR/.video_raw/$LOCAL_NAME" 2>&1; then
+        echo "  WARNING: failed to pull $BASENAME, skipping"
+        TAKE_NUM=$((TAKE_NUM - 1))
+        continue
+    fi
 
     echo "$BASENAME" >> "$VIDEO_MANIFEST"
 done <<< "$NEW_VIDEOS"
@@ -535,7 +539,10 @@ while IFS= read -r REC_REMOTE; do
     MIC_NAMED="$SESSION_DIR/.audio_raw/mic_${AUDIO_TS:0:8}_${AUDIO_TS:8}.wav"
 
     echo "Pulling audio: $REC_BASE"
-    adb_for "$AUDIO_SERIAL" pull "$REC_REMOTE" "$AUDIO_LOCAL" 2>&1
+    if ! adb_for "$AUDIO_SERIAL" pull "$REC_REMOTE" "$AUDIO_LOCAL" 2>&1; then
+        echo "  WARNING: failed to pull $REC_BASE, skipping"
+        continue
+    fi
 
     echo "  Converting → $(basename "$MIC_NAMED")"
     ffmpeg -y -i "$AUDIO_LOCAL" -ar 48000 -ac 1 "$MIC_NAMED" 2>/dev/null
