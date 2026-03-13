@@ -476,33 +476,32 @@ while IFS= read -r VIDEO_REMOTE; do
 done <<< "$ALL_VIDEOS"
 NEW_VIDEOS=$(echo "$NEW_VIDEOS" | sed '/^$/d' | sort)
 
+TAKE_NUM=0
 if [[ -z "$NEW_VIDEOS" ]]; then
     echo "No unprocessed videos found on $VIDEO_NAME."
     echo "To reprocess, edit: $VIDEO_MANIFEST"
-    exit 1
+else
+    VIDEO_COUNT=$(echo "$NEW_VIDEOS" | wc -l)
+    echo "Found $VIDEO_COUNT unprocessed video(s):"
+    echo "$NEW_VIDEOS" | while read -r f; do echo "  $(basename "$f")"; done
+    echo ""
+
+    while IFS= read -r VIDEO_REMOTE; do
+        TAKE_NUM=$((TAKE_NUM + 1))
+        PADNUM=$(printf "%03d" "$TAKE_NUM")
+        BASENAME=$(basename "$VIDEO_REMOTE")
+        LOCAL_NAME="${PADNUM}_${BASENAME}"
+
+        echo "Pulling take $TAKE_NUM: $BASENAME"
+        if ! adb_for "$VIDEO_SERIAL" pull "$VIDEO_REMOTE" "$SESSION_DIR/.video_raw/$LOCAL_NAME" 2>&1; then
+            echo "  WARNING: failed to pull $BASENAME, skipping"
+            TAKE_NUM=$((TAKE_NUM - 1))
+            continue
+        fi
+
+        echo "$BASENAME" >> "$VIDEO_MANIFEST"
+    done <<< "$NEW_VIDEOS"
 fi
-
-VIDEO_COUNT=$(echo "$NEW_VIDEOS" | wc -l)
-echo "Found $VIDEO_COUNT unprocessed video(s):"
-echo "$NEW_VIDEOS" | while read -r f; do echo "  $(basename "$f")"; done
-echo ""
-
-TAKE_NUM=0
-while IFS= read -r VIDEO_REMOTE; do
-    TAKE_NUM=$((TAKE_NUM + 1))
-    PADNUM=$(printf "%03d" "$TAKE_NUM")
-    BASENAME=$(basename "$VIDEO_REMOTE")
-    LOCAL_NAME="${PADNUM}_${BASENAME}"
-
-    echo "Pulling take $TAKE_NUM: $BASENAME"
-    if ! adb_for "$VIDEO_SERIAL" pull "$VIDEO_REMOTE" "$SESSION_DIR/.video_raw/$LOCAL_NAME" 2>&1; then
-        echo "  WARNING: failed to pull $BASENAME, skipping"
-        TAKE_NUM=$((TAKE_NUM - 1))
-        continue
-    fi
-
-    echo "$BASENAME" >> "$VIDEO_MANIFEST"
-done <<< "$NEW_VIDEOS"
 
 # ── Pull audio ───────────────────────────────────────────────────────────────
 echo ""
@@ -523,32 +522,39 @@ NEW_AUDIO=$(echo "$NEW_AUDIO" | sed '/^$/d')
 if [[ -z "$NEW_AUDIO" ]]; then
     echo "No unprocessed audio recordings found on $AUDIO_NAME."
     echo "To reprocess, edit: $AUDIO_MANIFEST"
-    exit 1
 fi
 
-AUDIO_COUNT=$(echo "$NEW_AUDIO" | wc -l)
-echo "Found $AUDIO_COUNT unprocessed recording(s):"
-echo "$NEW_AUDIO" | while read -r f; do echo "  $(basename "$f")"; done
-echo ""
+if [[ -z "$NEW_VIDEOS" && -z "$NEW_AUDIO" ]]; then
+    echo ""
+    echo "Nothing to do — no unprocessed videos or audio."
+    exit 0
+fi
 
-while IFS= read -r REC_REMOTE; do
-    [[ -z "$REC_REMOTE" ]] && continue
-    REC_BASE=$(basename "$REC_REMOTE")
-    AUDIO_TS=$(parse_audio_ts "$REC_BASE")
-    AUDIO_LOCAL="$SESSION_DIR/.audio_raw/phone_raw_${REC_BASE}"
-    MIC_NAMED="$SESSION_DIR/.audio_raw/mic_${AUDIO_TS:0:8}_${AUDIO_TS:8}.wav"
+if [[ -n "$NEW_AUDIO" ]]; then
+    AUDIO_COUNT=$(echo "$NEW_AUDIO" | wc -l)
+    echo "Found $AUDIO_COUNT unprocessed recording(s):"
+    echo "$NEW_AUDIO" | while read -r f; do echo "  $(basename "$f")"; done
+    echo ""
 
-    echo "Pulling audio: $REC_BASE"
-    if ! adb_for "$AUDIO_SERIAL" pull "$REC_REMOTE" "$AUDIO_LOCAL" 2>&1; then
-        echo "  WARNING: failed to pull $REC_BASE, skipping"
-        continue
-    fi
+    while IFS= read -r REC_REMOTE; do
+        [[ -z "$REC_REMOTE" ]] && continue
+        REC_BASE=$(basename "$REC_REMOTE")
+        AUDIO_TS=$(parse_audio_ts "$REC_BASE")
+        AUDIO_LOCAL="$SESSION_DIR/.audio_raw/phone_raw_${REC_BASE}"
+        MIC_NAMED="$SESSION_DIR/.audio_raw/mic_${AUDIO_TS:0:8}_${AUDIO_TS:8}.wav"
 
-    echo "  Converting → $(basename "$MIC_NAMED")"
-    ffmpeg -y -i "$AUDIO_LOCAL" -ar 48000 -ac 1 "$MIC_NAMED" 2>/dev/null
+        echo "Pulling audio: $REC_BASE"
+        if ! adb_for "$AUDIO_SERIAL" pull "$REC_REMOTE" "$AUDIO_LOCAL" 2>&1; then
+            echo "  WARNING: failed to pull $REC_BASE, skipping"
+            continue
+        fi
 
-    echo "$REC_BASE" >> "$AUDIO_MANIFEST"
-done <<< "$NEW_AUDIO"
+        echo "  Converting → $(basename "$MIC_NAMED")"
+        ffmpeg -y -i "$AUDIO_LOCAL" -ar 48000 -ac 1 "$MIC_NAMED" 2>/dev/null
+
+        echo "$REC_BASE" >> "$AUDIO_MANIFEST"
+    done <<< "$NEW_AUDIO"
+fi
 
 echo "Audio ready: $(ls -1 "$SESSION_DIR/.audio_raw/mic_"*.wav 2>/dev/null | wc -l) recording(s)"
 
