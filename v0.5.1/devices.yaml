@@ -1,0 +1,15 @@
+devices:
+- name: Pixel 4
+  serial: 192.168.11.105:5555
+  role: video
+  connection: wireless
+  pull_dir: /sdcard/DCIM/MotionCam
+  ip: 192.168.11.105
+  port: 5555
+- name: Samsung SM-A025F
+  serial: 192.168.11.106:5555
+  role: audio
+  connection: wireless
+  pull_dir: /sdcard/Android/data/com.first75.voicerecorder2/files/Recordings
+  ip: 192.168.11.106
+  port: 5555
