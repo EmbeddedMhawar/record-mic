@@ -563,6 +563,8 @@ fi
 echo "Audio ready: $(ls -1 "$SESSION_DIR/.audio_raw/mic_"*.wav 2>/dev/null | wc -l) recording(s)"
 
 # ── Sync all takes (match each video to its correct audio) ───────────────────
+# Recount from disk so previously pulled videos are included
+TAKE_NUM=$(ls -1 "$SESSION_DIR/.video_raw/"*.mp4 2>/dev/null | wc -l)
 echo ""
 echo "=== Syncing $TAKE_NUM take(s) ==="
 echo ""
