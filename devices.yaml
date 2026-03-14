@@ -1,3 +1,7 @@
+config:
+  broll_solo: 3
+  broll_crossfade: 3
+
 devices:
 - name: Pixel 4
   serial: 192.168.11.105:5555

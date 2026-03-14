@@ -7,7 +7,7 @@ load "$TEST_DIR/test_helper/bats-support/load"
 load "$TEST_DIR/test_helper/bats-assert/load"
 
 # Source the script (functions only — main guard prevents side effects)
-SCRIPT_UNDER_TEST="$TEST_DIR/../v0.5.1/record-mic.sh"
+SCRIPT_UNDER_TEST="$TEST_DIR/../record-mic.sh"
 source "$SCRIPT_UNDER_TEST"
 
 # Override constants AFTER sourcing (the script sets these at top-level)
